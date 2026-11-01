@@ -1,0 +1,99 @@
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql://brisamar_app:${APP_DB_PASSWORD:-brisamar_app_dev}@postgres:5432/brisamar
+  DATABASE_ADMIN_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres_dev}@postgres:5432/brisamar
+  REDIS_URL: redis://redis:6379/0
+  UPLOAD_DIR: /data/uploads
+  LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+  LLM_MODEL: ${LLM_MODEL:-gemini/gemini-2.5-flash}
+  EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fake}
+  EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini/gemini-embedding-001}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  MIN_VECTOR_SIMILARITY: ${MIN_VECTOR_SIMILARITY:-}
+  OTEL_EXPORTER: ${OTEL_EXPORTER:-console}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: brisamar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d brisamar"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: ./backend
+    image: brisamar-backend:local
+    command: ["python", "-m", "app.db.migrate"]
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: brisamar-backend:local
+    pull_policy: never
+    environment: *backend-env
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    image: brisamar-backend:local
+    pull_policy: never
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    environment: *backend-env
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    profiles: ["tracing"]
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+
+volumes:
+  pgdata:
+  uploads:
