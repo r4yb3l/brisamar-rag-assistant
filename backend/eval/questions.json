@@ -1,0 +1,21 @@
+{
+  "in_scope": [
+    {"question": "¿En qué plazo debe el asegurado comunicar un siniestro de autos?", "doc_key": "manual-siniestros-autos", "page": 1},
+    {"question": "¿A partir de qué importe de daños hace falta un perito presencial?", "doc_key": "manual-siniestros-autos", "page": 2},
+    {"question": "¿Qué franquicia se aplica a la rotura de lunas?", "doc_key": "manual-siniestros-autos", "page": 2},
+    {"question": "¿Cuántos días se concede el coche de sustitución?", "doc_key": "manual-siniestros-autos", "page": 2},
+    {"question": "¿Cuándo hay que derivar un expediente a la Unidad de Investigación de Fraude?", "doc_key": "circular-antifraude-autos", "page": 1},
+    {"question": "¿Se puede avisar al cliente de que su expediente se investiga por fraude?", "doc_key": "circular-antifraude-autos", "page": 2},
+    {"question": "¿En cuántas horas hay que denunciar un robo en la vivienda?", "doc_key": "manual-siniestros-hogar", "page": 1},
+    {"question": "¿Qué velocidad del viento tiene que haber para cubrir los daños?", "doc_key": "manual-siniestros-hogar", "page": 2},
+    {"question": "¿Cómo se indemnizan los electrodomésticos dañados por una subida de tensión?", "doc_key": "manual-siniestros-hogar", "page": 3},
+    {"question": "¿Qué documentos piden los beneficiarios por fallecimiento del asegurado?", "doc_key": "circular-prestaciones-vida", "page": 1},
+    {"question": "¿Está cubierto el suicidio en el seguro de vida?", "doc_key": "circular-prestaciones-vida", "page": 2},
+    {"question": "¿Qué penalización tiene el rescate total de la póliza de vida?", "doc_key": "circular-prestaciones-vida", "page": 3}
+  ],
+  "out_of_scope": [
+    "¿Cuál es la receta tradicional de la paella valenciana?",
+    "¿Quién ganó el último mundial de fútbol?",
+    "¿Cómo configuro una VPN en mi portátil?"
+  ]
+}
