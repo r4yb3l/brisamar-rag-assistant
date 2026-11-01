@@ -1,0 +1,48 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: brisamar
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d brisamar"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: postgresql://brisamar_app:brisamar_app@localhost:5432/brisamar
+      DATABASE_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/brisamar
+      REDIS_URL: redis://localhost:6379/0
+      OTEL_EXPORTER: none
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - name: Install
+        run: pip install -c requirements.lock -e ".[dev]"
+      - name: Lint
+        run: ruff check app tests eval
+      - name: Unit and integration tests
+        run: pytest -q
+      - name: Retrieval eval
+        run: python -m eval.run_eval
+      - name: Backend image builds
+        run: docker build -t brisamar-backend:ci .
