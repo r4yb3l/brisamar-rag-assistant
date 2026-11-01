@@ -1,6 +1,5 @@
 x-backend-env: &backend-env
   DATABASE_URL: postgresql://brisamar_app:${APP_DB_PASSWORD:-brisamar_app_dev}@postgres:5432/brisamar
-  DATABASE_ADMIN_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres_dev}@postgres:5432/brisamar
   REDIS_URL: redis://redis:6379/0
   UPLOAD_DIR: /data/uploads
   LLM_PROVIDER: ${LLM_PROVIDER:-fake}
@@ -39,7 +38,9 @@ services:
     build: ./backend
     image: brisamar-backend:local
     command: ["python", "-m", "app.db.migrate"]
-    environment: *backend-env
+    environment:
+      <<: *backend-env
+      DATABASE_ADMIN_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres_dev}@postgres:5432/brisamar
     depends_on:
       postgres:
         condition: service_healthy
